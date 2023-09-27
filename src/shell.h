@@ -4,6 +4,9 @@
 /*---IMPORTS---*/
 #include<stdio.h>
 
+/*---MACROS---*/
+char * PROMPT;
+
 /*---PROTOTYPES---*/
 typedef struct shell_cfg
 {
