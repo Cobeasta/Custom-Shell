@@ -2,6 +2,9 @@
 .idea
 # Prerequisites
 *.d
+# Binary folders
+bin
+build
 
 # Object files
 *.o

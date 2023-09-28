@@ -1,18 +1,16 @@
-
 CC = gcc
 # directories
+SRCDIR = src
 ODIR = build
 BINDIR = bin
 # targets
-SRC = $(wildcard *.c)
-OBJ_FILES = $(patsubst $(SRCDIR)/%.c,$(ODIR)/%.o,$(SRC))
-OBJ = $(SRC:$(SRCDIR)/%.c=$(ODIR)/%.o)
-
+SRC_FILES = $(wildcard $(SRCDIR)/*.c)
+OBJ_FILES = $(patsubst $(SRCDIR)/%.c,$(ODIR)/%.o, $(SRC_FILES))
 .PHONY: all clean
 
 all: directories target
 # output files
-$(ODIR)/%.o: %.c
+$(ODIR)/%.o: $(SRCDIR)/%.c
 	$(CC) -c -o $@ $<
 
 # Link into binary
