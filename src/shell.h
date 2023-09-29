@@ -4,7 +4,6 @@
 /*---IMPORTS---*/
 #include<stdio.h>
 #include <string.h>
-
 /*---MACROS---*/
 
 /*---PROTOTYPES---*/

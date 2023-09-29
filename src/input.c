@@ -28,9 +28,12 @@ void input_init(shell_cfg_t *cfg)
 int getinput(FILE *in_stream)
 {
     char *buf = malloc(32 * sizeof(char)); // buffer for reading
+    char bufchar;
     int in_size = 64, in_len = 0;
     char *user_input = malloc(in_size * sizeof(char)); // string representing user command
 
+    // flags to change input behavior
+    int f_escape, f_tab = 0;
 
     size_t nbytes;
     ssize_t bytes_read = 0;
@@ -38,12 +41,32 @@ int getinput(FILE *in_stream)
     // read file,
     while (fgets(buf, sizeof(buf), in_stream) != NULL && (bytes_read = strlen(buf))&& bytes_read > 0) //successfully read some bytes
     {
-        if ((in_len + bytes_read) > in_size) // need more bytes in input
+        if ((in_len + bytes_read) > in_size)
         {
-            in_size *= 2; // double input sizze
+            in_size *= 2; // double input size if the input is too short
             user_input = realloc(user_input, sizeof(char) * in_size); //reallocate space for input size
         }
-        strcat(user_input, buf);
+         bufchar = * buf; // Character at start of buffer
+        switch(bufchar)
+        {
+            case '\n':
+                if(f_escape)
+                {
+
+                }
+                else
+                {
+
+                }
+                break;
+            case '\\':
+
+            default:
+                user_input[in_len] = bufchar; //Normal character
+                break;
+        }
+        char in_char = user_input[in_len];
+
     }
     if(errno == EINTR)
     {

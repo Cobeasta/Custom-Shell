@@ -1,4 +1,5 @@
 #include "shell.h"
+#include <ncurses.h>
 
 #define opt_promptID 0
 
@@ -25,6 +26,7 @@ opt_t options[] = {
 
 int main(int argc, char *argv[])
 {
+    initscr();
   //parse_args(&argc, &argv);
   shell_interactive();
 }

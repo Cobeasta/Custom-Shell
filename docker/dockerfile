@@ -1,0 +1,23 @@
+FROM alpine:latest as base
+# Parameterize user since CLion uses host UID
+# This avoids file permission issues
+ARG UID=1000
+RUN adduser -h /home/builder -u ${UID} -s /bin/sh -D builder && passwd -u builder
+USER builder
+
+FROM base as ref
+USER root
+# Install needed build tools
+RUN apk update && apk add make gcc gdb musl-dev nginx openssh openssh-server rsync ncurses ncurses-dev
+# Set up ssh
+RUN        sed -i '/^#Port 22/s/^#//' /etc/ssh/sshd_config \
+        && sed -i '/^#PasswordAuthentication/s/^#//' /etc/ssh/sshd_config \
+        && sed -i '/^#PermitEmptyPasswords no/s/^#PermitEmptyPasswords no/PermitEmptyPasswords yes/' /etc/ssh/sshd_config \
+        && sed -i '/^#PermitRootLogin prohibit-password/s/^#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE 22 7777
+COPY entrypoint.sh /
+
+
+
