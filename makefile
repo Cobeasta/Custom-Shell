@@ -1,5 +1,6 @@
-CC = gcc
 
+.SHELLFLAGS := -c
+CC = gcc
 LDLIBS=-lncurses
 # directories
 SRCDIR = src
@@ -13,16 +14,20 @@ OBJ_FILES = $(patsubst $(SRCDIR)/%.c,$(ODIR)/%.o, $(SRC_FILES))
 all: directories target
 # output files
 $(ODIR)/%.o: $(SRCDIR)/%.c
-	$(CC) -c -o $@ $< $(LDLIBS)
+	$(info "Compile target")
+	$(CC) -c -o $@ $<
 
 # Link into binary
 target: $(OBJ_FILES)
-	$(CC) -o $(BINDIR)/main.exe $(OBJ_FILES)
+	$(info "Binary target")
+	$(CC) -o $(BINDIR)/shell $(OBJ_FILES) $(LDLIBS)
 
 # Create directories
 directories:
-	mkdir -p $(ODIR)
-	mkdir -p $(BINDIR)
+	echo shell is $(SHELL)
+	$(mkdir -p $(ODIR))
+	$(mkdir -p $(BINDIR))
 clean:
+	$(info "clean target")
 	rm -f $(OBJ)
 

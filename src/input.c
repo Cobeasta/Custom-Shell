@@ -1,16 +1,17 @@
 #include "input.h"
-#include <unistd.h> // posix standard
+#include "shell.h"
 
 
 // clear completely empties screen using a control sequence
 // CSI command (control sequence introducer starts with ESC[ followed by parameters
 // Cursor home position (\033[H) then erase in display (\033[J) from cursor to end of screen
-#define clear() printf("\033[H\033[J")
+//#define clear() printf("\033[H\033[J")
 
 // config as set in shell.c
 shell_cfg_t *s_cfg;
 
 
+void promptLine();
 
 
 /*
@@ -21,16 +22,17 @@ void input_init(shell_cfg_t *cfg)
     s_cfg = cfg;
     clear();
 
-    printf("\n\n\n\nCoby's CPR E 308 Shell\n");
-    printf("User:\t%s", s_cfg->username);
+    printf("\n\n\n\nCoby's CPR E 308 Shell\n\r");
+    printf("User:\t%s\n\r", s_cfg->username);
 }
 
-int getinput(FILE *in_stream)
+char * input_get(FILE *in_stream)
 {
-    char *buf = malloc(32 * sizeof(char)); // buffer for reading
-    char bufchar;
-    int in_size = 64, in_len = 0;
-    char *user_input = malloc(in_size * sizeof(char)); // string representing user command
+    int bufsize = 64, insize = 0;
+    char *buf = malloc(bufsize * sizeof(char)); // buffer for reading
+
+    char input;
+
 
     // flags to change input behavior
     int f_escape, f_tab = 0;
@@ -39,27 +41,40 @@ int getinput(FILE *in_stream)
     ssize_t bytes_read = 0;
 
     // read file,
-    while (fgets(buf, sizeof(buf), in_stream) != NULL && (bytes_read = strlen(buf))&& bytes_read > 0) //successfully read some bytes
+    while ((input = getch())) //successfully read some bytes
     {
-        if ((in_len + bytes_read) > in_size)
+        if (interrupted) // receive SIGTERM
         {
-            in_size *= 2; // double input size if the input is too short
-            user_input = realloc(user_input, sizeof(char) * in_size); //reallocate space for input size
+            buf = "";
+            return buf;
         }
-         bufchar = * buf; // Character at start of buffer
-        switch(bufchar)
+        if ((insize) >= bufsize)
+        {
+            bufsize *= 2; // double input size if the input is too short
+            buf = realloc(buf, sizeof(char) * bufsize); //reallocate space for input size
+        }
+        switch(input)
         {
             case '\n':
                 if(f_escape)
                 {
-
+                    // new line on prompt, continue input
                 }
                 else
                 {
-
+                    // return input to main loop
                 }
                 break;
             case '\\':
+                if(f_escape)
+                {
+                    f_escape = 0;
+                    buf[insize++] = input;
+                }
+                else
+                {
+                    f_escape = 1;
+                }
 
             default:
                 user_input[in_len] = bufchar; //Normal character
@@ -78,5 +93,9 @@ int getinput(FILE *in_stream)
         // read terminated, bad file
         //TODO
     }
+}
+
+void promptLine()
+{
 
 }
