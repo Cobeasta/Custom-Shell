@@ -20,8 +20,10 @@ typedef struct option {
 
 // Default config for shell
 shell_cfg_t config = {
-        .prompt = "308sh",
-        .username = NULL
+        .prompt = "308sh ",
+        .username = NULL,
+        .max_commands = 100,
+        .max_letters = 1000
 };
 
 // Available options for shell
@@ -29,14 +31,16 @@ opt_t options[] = {
         {opt_promptID, "p", "prompt"}};
 
 int main(int argc, char *argv[]) {
-    initscr();
+    // configure interrupt behavior
+    signal(SIGINT, sig_handler);
+    signal(SIGTERM, sig_handler);
+
+    // Get shell process information
     config.username = getlogin();
     //parse_args(&argc, &argv);
+    // start interactive
     shell_interactive();
 
-    clear();
-    refresh();
-    endwin();
     exit(0);
 }
 
@@ -44,6 +48,21 @@ void shell_interactive() {
 
     input_init(&config);
 
+    while(1)
+    {
+        char * user_input = (char *)  NULL;
+
+        if (RECV_SIG_INT) // receive SIGTERM
+        {
+            input_close();
+            exit(0);
+        }
+        user_input = input_get(stdin);
+
+        //TODO add history
+
+
+    }
     input_get(stdin);
 
 }
@@ -51,7 +70,7 @@ void shell_interactive() {
 
 
 void parse_args(int *argc, char **argv[]) {
-    signal(SIGTERM, sig_handler);
+
     size_t opt_ct = 1;
     size_t opt_index, opt_search_index;
     int opt_long; // flag for whether option is long or short. 0 = short, 1 = long
@@ -87,13 +106,15 @@ void parse_args(int *argc, char **argv[]) {
 
 void sig_handler(int sig) {
     switch (sig) {
+        case SIGINT:
+            fprintf(stderr, "Retreived interrupt signal\n\r");
+            RECV_SIG_INT = 1;
+            break;
         case SIGSEGV:
             fprintf(stderr, "Backtrace of something\n\r");
             break;
         case SIGTERM:
-            interrupted = 1;
             fprintf(stderr, "Received termination signal\n\r");
-
             break;
     }
 }

@@ -1,7 +1,7 @@
 
 .SHELLFLAGS := -c
 CC = gcc
-LDLIBS=-lncurses
+LDLIBS=-lncurses -lreadline
 # directories
 SRCDIR = src
 ODIR = build
@@ -15,7 +15,7 @@ all: directories target
 # output files
 $(ODIR)/%.o: $(SRCDIR)/%.c
 	$(info "Compile target")
-	$(CC) -c -o $@ $<
+	$(CC) -c -o $@ $< $(LDLIBS)
 
 # Link into binary
 target: $(OBJ_FILES)

@@ -1,0 +1,9 @@
+services:
+  dev-env:
+    container_name: "dev-env-$COMPOSE_PROJECT_NAME"
+    build: docker
+    ports:
+      - 127.0.0.1:2222:22
+    volumes:
+      - ~/$COMPOSE_PROJECT_NAME:/usr/includes/
+      - .:/home/builder/$COMPOSE_PROJECT_NAME
