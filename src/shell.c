@@ -5,10 +5,8 @@
 #define opt_promptID 0
 
 // PROTOTYPES
-void parse_args(int *argc, char **argv[]);
-
 void shell_interactive();
-
+void parse_terminal_args(int argc, char *argv[]);
 void sig_handler(int);
 
 // DATATYPES
@@ -37,7 +35,6 @@ int main(int argc, char *argv[]) {
 
     // Get shell process information
     config.username = getlogin();
-    //parse_args(&argc, &argv);
     // start interactive
     shell_interactive();
 
@@ -58,7 +55,17 @@ void shell_interactive() {
             exit(0);
         }
         user_input = input_get(stdin);
-        parse_input(user_input);
+
+        usr_cmd_t  in_cmd = parse_input(user_input);
+
+        printf("Command: %s\n\r", in_cmd.cmd);
+        printf("Args:\n\r");
+        int i;
+
+        for(i = 0; i < in_cmd.argc; i++)
+        {
+            printf("\tArg %d: %s\n\r", i, in_cmd.argv[i]);
+        }
 
         //TODO add history
 
@@ -70,7 +77,8 @@ void shell_interactive() {
 
 
 
-void parse_args(int argc, char *argv[]) {
+void parse_terminal_args(int argc, char *argv[])
+{
 
     size_t opt_ct = 1;
     size_t opt_index, opt_search_index;
@@ -80,7 +88,7 @@ void parse_args(int argc, char *argv[]) {
     // parse all arguments
     for (opt_index = 1; opt_index < argc && strcmp(argv[opt_index], "-") != 0; opt_index++) {
         opt_long = 0;           // Default short option
-        optI = (*argv)[opt_index]; // Get option value
+        optI = (argv)[opt_index]; // Get option value
         if (optI[1] == '-')     // if long option
         {
             optI++; // Make option look like short option.
@@ -95,7 +103,7 @@ void parse_args(int argc, char *argv[]) {
             {
                 switch (opt.arg_id) {
                     case opt_promptID:
-                        config.prompt = (*argv)[opt_index];
+                        config.prompt = (argv)[opt_index];
                         break;
                     default: // option  does not exist TODO err out
                         break;
