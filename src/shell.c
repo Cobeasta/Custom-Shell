@@ -58,6 +58,7 @@ void shell_interactive() {
             exit(0);
         }
         user_input = input_get(stdin);
+        parse_input(user_input);
 
         //TODO add history
 
@@ -69,7 +70,7 @@ void shell_interactive() {
 
 
 
-void parse_args(int *argc, char **argv[]) {
+void parse_args(int argc, char *argv[]) {
 
     size_t opt_ct = 1;
     size_t opt_index, opt_search_index;
@@ -77,7 +78,7 @@ void parse_args(int *argc, char **argv[]) {
     char *optI;   // current option in iteration
 
     // parse all arguments
-    for (opt_index = 1; opt_index < *argc && strcmp(*argv[opt_index], "-"); opt_index++) {
+    for (opt_index = 1; opt_index < argc && strcmp(argv[opt_index], "-") != 0; opt_index++) {
         opt_long = 0;           // Default short option
         optI = (*argv)[opt_index]; // Get option value
         if (optI[1] == '-')     // if long option
@@ -89,8 +90,8 @@ void parse_args(int *argc, char **argv[]) {
         // iterate over options
         for (; opt_search_index < opt_ct; opt_search_index++) {
             opt_t opt = options[opt_search_index];
-            if ((opt_long == 0 && strcmp((optI + 1), opt.short_name)) ||
-                (opt_long == 1 && strcmp((optI + 1), opt.long_name))) // Long option
+            if ((opt_long == 0 && strcmp((optI + 1), opt.short_name) != 0) ||
+                (opt_long == 1 && strcmp((optI + 1), opt.long_name) != 0)) // Long option
             {
                 switch (opt.arg_id) {
                     case opt_promptID:
@@ -115,6 +116,9 @@ void sig_handler(int sig) {
             break;
         case SIGTERM:
             fprintf(stderr, "Received termination signal\n\r");
+            break;
+        default:
+            fprintf(stderr, "SOMETHING WEIRD HAPPENED\n\r");
             break;
     }
 }

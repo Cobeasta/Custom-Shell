@@ -2,7 +2,7 @@
 #define SHELL_H
 
 /*---IMPORTS---*/
-#include<stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
@@ -14,6 +14,8 @@
 static volatile sig_atomic_t RECV_SIG_TERM = 0;
 static volatile sig_atomic_t RECV_SIG_INT = 0;
 static volatile sig_atomic_t RECV_SIG_QUIT = 0;
+
+static volatile sig_atomic_t USR_ERR = 0;
 typedef struct shell_cfg
 {
   char * prompt;
@@ -24,5 +26,6 @@ typedef struct shell_cfg
 
 /*---IMPORTS---*/
 #include "input.h"
+#include "parse_input.h"
 
 #endif

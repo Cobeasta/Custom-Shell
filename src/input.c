@@ -13,7 +13,7 @@ shell_cfg_t *s_cfg;
 char * line;
 
 char ** history;
-
+int i_history; // index in history list
 /*
  * Provide a greeting message for starting the shell
  */
@@ -21,7 +21,8 @@ void input_init(shell_cfg_t *cfg)
 {
     s_cfg = cfg;
     line = malloc(sizeof(char) * s_cfg->max_letters); // allocate string for input
-    history = malloc(sizeof (void *) * s_cfg -> max_commands); // allocate list for history
+    history = malloc(sizeof (char *) * s_cfg -> max_commands); // allocate list for history
+    i_history = 0;
     clear();
 
 
@@ -47,6 +48,17 @@ char * input_get()
         free(buf);
     }
     return line;
+}
+
+void add_history(char * str)
+{
+    if(i_history >= s_cfg -> max_commands)
+    {
+
+    }
+
+    strcpy(history[i_history], str); // copy string into history
+    i_history++;
 }
 
 void input_close()
