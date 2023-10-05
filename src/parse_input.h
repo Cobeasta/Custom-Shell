@@ -9,19 +9,10 @@
 
 
 /*---TYPES---*/
-/**
- *
- */
-typedef struct cmd {
-    char * cmd;
-    int argc;
-    char ** argv;
-} usr_cmd_t;
-
 
 
 /*---PROTOTYPES---*/
 // parse a string line into a command
-usr_cmd_t parse_input(char * line);
+usr_cmd_t * parse_input(char * line);
 
 #endif //PARSE_INPUT_H

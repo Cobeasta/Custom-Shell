@@ -49,7 +49,7 @@ build
 
 # Kernel Module Compile Results
 *.mod*
-*.cmd
+*.name
 .tmp_versions/
 modules.order
 Module.symvers

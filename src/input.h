@@ -1,23 +1,17 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-/*---INCLUDES---*/
-#include <stdio.h>  // standard IO
-#include <string.h> // string manipulation
-#include <unistd.h> // posix standard
-#include <readline/readline.h> // package for fancily reading lines
-
-
-#include <stdlib.h> // type conversions, memory allocations, algorithms, ...
-#include<fcntl.h> // file control
-#include <errno.h> // error numbers
 /*---IMPORTS---*/
 #include "shell.h"
+
+/*---INCLUDES---*/
+#include <readline/readline.h> // package for fancily reading lines
 
 
 /*---PROTOTYPES---*/
 void input_init(shell_cfg_t * cfg);
-char *  input_get();
+char *  input_get(char * line);
+void input_handle_interrupt(int signo);
 /**
  * Free input memory.
  */

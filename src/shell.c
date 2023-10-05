@@ -5,6 +5,8 @@
 #define opt_promptID 0
 
 // PROTOTYPES
+
+
 void shell_interactive();
 void parse_terminal_args(int argc, char *argv[]);
 void sig_handler(int);
@@ -16,12 +18,15 @@ typedef struct option {
     char *long_name;
 } opt_t;
 
+enum shell_state s_state = INPUT;
+int FLAG_EXIT_CLEAN = 0;
 // Default config for shell
 shell_cfg_t config = {
         .prompt = "308sh ",
         .username = NULL,
         .max_commands = 100,
-        .max_letters = 1000
+        .max_letters = 1000,
+        .CDPATH = "~"
 };
 
 // Available options for shell
@@ -30,8 +35,21 @@ opt_t options[] = {
 
 int main(int argc, char *argv[]) {
     // configure interrupt behavior
-    signal(SIGINT, sig_handler);
-    signal(SIGTERM, sig_handler);
+    if(signal(SIGINT, sig_handler) == SIG_ERR)
+    {
+        fprintf(stderr, "Failed to register interrupt for SIGINT");
+        exit(1);
+    }
+    if(signal(SIGTERM, sig_handler) == SIG_ERR)
+    {
+        fprintf(stderr, "Failed to register interrupt for SIGTERM");
+        exit(1);
+    }
+    if(signal(SIGCHLD, sig_handler) == SIG_ERR)
+    {
+        fprintf(stderr, "Failed to register interrupt for SIGCHILD");
+        exit(1);
+    }
 
     // Get shell process information
     config.username = getlogin();
@@ -44,34 +62,61 @@ int main(int argc, char *argv[]) {
 void shell_interactive() {
 
     input_init(&config);
-
+    char * user_input = (char *)  NULL;
+    usr_cmd_t * usr_in_cmd = NULL;
+    s_state = INPUT;
     while(1)
     {
-        char * user_input = (char *)  NULL;
-
-        if (RECV_SIG_INT) // receive SIGTERM
+        // Checks for current shell process
+        if(FLAG_EXIT_CLEAN == 1)
         {
+            printf("Thanks!\n\r");
             input_close();
+            execute_close();
             exit(0);
         }
-        user_input = input_get(stdin);
-
-        usr_cmd_t  in_cmd = parse_input(user_input);
-
-        printf("Command: %s\n\r", in_cmd.cmd);
-        printf("Args:\n\r");
-        int i;
-
-        for(i = 0; i < in_cmd.argc; i++)
+        else if(s_state == INPUT)
         {
-            printf("\tArg %d: %s\n\r", i, in_cmd.argv[i]);
+            user_input = malloc(sizeof(char) * config.max_letters); //get space for line
+
+            user_input = input_get(user_input);
+            // TODO add to history
+            s_state = PARSE;
+        }
+        else if(s_state == PARSE)
+        {
+            if(user_input == NULL)
+            {
+                s_state = INPUT;
+                continue;
+            }
+            usr_in_cmd = parse_input(user_input);
+
+            // free space for line
+            free(user_input);
+            user_input = NULL;
+
+            s_state = EXECUTE;
+        }
+        else if(s_state == EXECUTE)
+        {
+            int ucmd_status;
+            execute_cmd(* usr_in_cmd, &ucmd_status);
+            s_state = INPUT;
+        }
+        else if(s_state == WAIT)
+        {
+
+        }
+        else if(s_state == FINISHED)
+        {
+            s_state = INPUT;
         }
 
-        //TODO add history
+
 
 
     }
-    input_get(stdin);
 
 }
 
@@ -117,6 +162,7 @@ void sig_handler(int sig) {
     switch (sig) {
         case SIGINT:
             fprintf(stderr, "Retreived interrupt signal\n\r");
+            input_handle_interrupt(sig);
             RECV_SIG_INT = 1;
             break;
         case SIGSEGV:
@@ -125,8 +171,19 @@ void sig_handler(int sig) {
         case SIGTERM:
             fprintf(stderr, "Received termination signal\n\r");
             break;
+        case SIGCHLD:
+            execute_child_exit();
+            break;
         default:
             fprintf(stderr, "SOMETHING WEIRD HAPPENED\n\r");
             break;
     }
+}
+
+usr_cmd_t *init_cmd(int bufsize)
+{
+    usr_cmd_t *parsed = malloc(sizeof(usr_cmd_t)); // allocate space for user's command
+    parsed->argc = 0;
+    parsed ->argv = malloc(sizeof(char *) * bufsize); // array of string parts of command input
+    return parsed;
 }
