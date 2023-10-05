@@ -5,12 +5,11 @@
 #include "execute_cmds.h"
 
 
-
 int remove_process(pid_t pid);
 
 
-cmd_exe_t * head_cmd = NULL;
-cmd_exe_t * current_cmd = NULL;
+cmd_exe_t *HEAD = NULL;
+cmd_exe_t *current_cmd = NULL;
 
 
 int execute_init()
@@ -20,28 +19,10 @@ int execute_init()
     return 0;
 
 }
-
 int execute_cmd(usr_cmd_t cmd, int *status)
 {
     pid_t pid;
-    if(strcmp(cmd.name, "exit") == 0)
-    {
-        *status = 0;
-        FLAG_EXIT_CLEAN = 1;
-        return 0;
-    }
-    else if(strcmp(cmd.name, "pid"))
-    {
-        pid_t result = getpid();
-        printf("%d\n\r", result);
-        return 0;
-    }
-    else if(strcmp(cmd.name, "ppid"))
-    {
-        pid_t result = getppid();
-        printf("%d\n\r", result);
-        return 0;
-    }
+
     fun_call_t fun = internal_find(cmd);
 
     // Create command object
@@ -50,119 +31,134 @@ int execute_cmd(usr_cmd_t cmd, int *status)
 
     // if we need to expand capacity for more commands
 
-    if (strcmp(fun.name, INTERNAL_CMD_NOTFOUND) == 0)
+    if (fun.cmd_fn == NULL)
     {
-        printf("Could not find matching internal command\n\r");
-        // Not an internal command, check is file for command exists,
-        // try running external command
+        FILE * file;
+        struct stat cmd_stat;
+        stat(cmd.name, &cmd_stat);
+        if(S_ISDIR(cmd_stat.st_mode))
+        {
+            printf("%s is a dir, not a program", cmd.name);
+            return 0;
+        }
+        pid = fork();
+
+        if (pid == 0) // child process
+        {
+            int curpid;
+            usleep(1);
+            curpid = getpid();
+            printf("cmd: %s pid: %d started\n\r", cmd.name, curpid);
+            *status = execvp(cmd.name, cmd.argv);
+
+            FLAG_EXIT_CLEAN = 1;
+            return *status;
+        } else if (pid > 0) // parent process
+        {
+            (*cmd_exe).pid = pid;
+
+            if (cmd.bg == 0) // foreground task
+            {
+                waitpid(pid, (*cmd_exe).status, 0);
+                printf("PID %d exited with status %d\n\r", pid, *status);
+                s_state = FINISHED;
+                return *cmd_exe->status;
+            } else if (cmd.bg == 1) // background task
+            {
+                // add command to linked-list of commands
+                if (HEAD == NULL)
+                {
+                    HEAD = cmd_exe;
+                    current_cmd = HEAD;
+                } else
+                {
+                    //start at head
+                    current_cmd = HEAD->next;
+                    // find last command
+                    while (current_cmd->next != NULL)
+                    {
+                        current_cmd = current_cmd->next;
+                    }
+                    // insert new command
+                    current_cmd->next = cmd_exe;
+                }
+                return pid;
+            }
+        }
     } else
     {
         // Found internal command
-        pid = fork();
-        if (pid == -1) // if fork failed
+        if (cmd.bg == 0)
         {
-            // fork failed
-            fprintf(stderr, "Error in fork\n\r");
-        } else if (pid == 0) // if in child process
-        {
-            // if running internal, do that function
             *status = fun.cmd_fn(cmd);
-            exit(*status); // exit with status of that function
-            // if external command, execve that
-            // in child
-        }
-    }
-    if (pid > 0) // if we are in parent process
-    {
-        (*cmd_exe).pid = pid;
-
-        if (cmd.bg == 0) // if run in foreground
+            return *status;
+        } else if (cmd.bg == 1)
         {
-            s_state = WAIT;
-            waitpid(pid, status, 0); // wait and suspend until child is done
-            s_state = FINISHED;
-            return pid;
-        } else if (cmd.bg == 1) // if be command should run in background
-        {
-            if(head_cmd == NULL)
-            {
-                head_cmd = cmd_exe;
-                current_cmd = head_cmd;
-            }
-            else
-            {
-                //start at head
-                current_cmd = head_cmd->next;
-                // find last command
-                while(current_cmd -> next != NULL)
-                {
-                    current_cmd = current_cmd -> next;
-                }
-                // insert new command
-                current_cmd->next = cmd_exe;
-            }
-            return pid; // return pid of child process
+           // todo background internal
         }
+
     }
-
-
 }
+
 void execute_child_exit()
 {
     pid_t pid;
-    int * wstat;
+    int *wstat;
 
     int saved_errno = errno;
     int exit_status;
-    while(1)
+    while (1)
     {
         // waitpid returns 0 if no children changed state
         // returns PID of terminated child whose state changed
-        pid = waitpid((pid_t)(-1), &exit_status, WNOHANG);
-        if(pid == -1)
+        pid = waitpid((pid_t) (-1), &exit_status, WNOHANG);
+        if (pid == -1 && 10 == errno)
         {
-            fprintf(stderr, "Error in child exit handler");
+            // no children
             break;
-        }
-        else if(pid == 0)
+        } else if (pid == -1)
+        {
+            fprintf(stderr, "Unhandled error in child exit handler");
+            printf("\tErrno: %d\n\r", errno);
+            break;
+        } else if (pid == 0)
         {
             fprintf(stderr, "No child's state changed\n\r");
             return;
-        }
-        else
+        } else
         {
             fprintf(stderr, "Process with pid %d exited\n\r", pid);
             remove_process(pid);
         }
     }
 }
+
 int remove_process(pid_t pid)
 {
-    if(head_cmd == NULL)
+    if (HEAD == NULL)
     {
         return -1;
-    }
-    else
+    } else
     {
         //start at head
-        current_cmd = head_cmd;
-        cmd_exe_t * next_cmd = current_cmd -> next;
+        current_cmd = HEAD;
+        cmd_exe_t *next_cmd = current_cmd->next;
         // Find the command before the one with the "right" pid
-        while(next_cmd != NULL && next_cmd->pid != pid)
+        while (next_cmd != NULL && next_cmd->pid != pid)
         {
-         current_cmd = current_cmd -> next; // next command is still in last
-         next_cmd = current_cmd -> next;
+            current_cmd = current_cmd->next; // next command is still in last
+            next_cmd = current_cmd->next;
         }
-        if(next_cmd == NULL)
+        if (next_cmd == NULL)
         {
             return -1; // did not find pid
         }
-        if(next_cmd -> next != NULL) // if node exists after in linked list
+        if (next_cmd->next != NULL) // if node exists after in linked list
         {
-            current_cmd -> next = current_cmd -> next -> next; // current node skips removed pid
+            current_cmd->next = current_cmd->next->next; // current node skips removed pid
         }
         // insert new command
-        free(current_cmd -> next); // free the pointer to the finished cmd
+        free(current_cmd->next); // free the pointer to the finished cmd
     }
     // insert new command
 }
@@ -171,6 +167,7 @@ void execute_interrupt()
 {
 
 }
+
 void execute_close()
 {
 

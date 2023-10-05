@@ -30,4 +30,6 @@ int execute_init();
 int execute_cmd(usr_cmd_t cmd, int * stat);
 void execute_child_exit();
 void execute_close();
+
+extern cmd_exe_t * HEAD;
 #endif //CUSTOM_SHELL_EXECUTE_CMDS_H

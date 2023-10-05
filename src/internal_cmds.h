@@ -19,4 +19,5 @@ typedef struct fun_call
 int internal_init(shell_cfg_t * cfg);
 fun_call_t internal_find(usr_cmd_t cmd);
 
+
 #endif //CUSTOM_SHELL_INTERNAL_CMDS_H

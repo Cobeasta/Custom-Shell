@@ -8,11 +8,14 @@
 
 
 void shell_interactive();
+
 void parse_terminal_args(int argc, char *argv[]);
+
 void sig_handler(int);
 
 // DATATYPES
-typedef struct option {
+typedef struct option
+{
     int arg_id;
     char *short_name;
     char *long_name;
@@ -33,19 +36,20 @@ shell_cfg_t config = {
 opt_t options[] = {
         {opt_promptID, "p", "prompt"}};
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     // configure interrupt behavior
-    if(signal(SIGINT, sig_handler) == SIG_ERR)
+    if (signal(SIGINT, sig_handler) == SIG_ERR)
     {
         fprintf(stderr, "Failed to register interrupt for SIGINT");
         exit(1);
     }
-    if(signal(SIGTERM, sig_handler) == SIG_ERR)
+    if (signal(SIGTERM, sig_handler) == SIG_ERR)
     {
         fprintf(stderr, "Failed to register interrupt for SIGTERM");
         exit(1);
     }
-    if(signal(SIGCHLD, sig_handler) == SIG_ERR)
+    if (signal(SIGCHLD, sig_handler) == SIG_ERR)
     {
         fprintf(stderr, "Failed to register interrupt for SIGCHILD");
         exit(1);
@@ -53,39 +57,51 @@ int main(int argc, char *argv[]) {
 
     // Get shell process information
     config.username = getlogin();
+
+    parse_terminal_args(argc, argv);
     // start interactive
     shell_interactive();
 
     exit(0);
 }
 
-void shell_interactive() {
-
-    input_init(&config);
-    char * user_input = (char *)  NULL;
-    usr_cmd_t * usr_in_cmd = NULL;
+void shell_interactive()
+{
+    char *user_input = (char *) NULL;
+    usr_cmd_t *usr_in_cmd = NULL;
     s_state = INPUT;
-    while(1)
+    int ucmd_status;
+    input_init(&config);
+    execute_init();
+    internal_init(&config);
+    while (1)
     {
         // Checks for current shell process
-        if(FLAG_EXIT_CLEAN == 1)
+        if (FLAG_EXIT_CLEAN == 1)
         {
-            printf("Thanks!\n\r");
             input_close();
             execute_close();
-            exit(0);
-        }
-        else if(s_state == INPUT)
+            exit(ucmd_status);
+        } else if (s_state == INPUT)
         {
             user_input = malloc(sizeof(char) * config.max_letters); //get space for line
 
             user_input = input_get(user_input);
             // TODO add to history
-            s_state = PARSE;
-        }
-        else if(s_state == PARSE)
+            if (strlen(user_input) > 0)
+            {
+                s_state = PARSE;
+            } else
+            {
+                free(user_input);
+                user_input = NULL;
+
+                s_state = INPUT;
+            }
+
+        } else if (s_state == PARSE)
         {
-            if(user_input == NULL)
+            if (user_input == NULL)
             {
                 s_state = INPUT;
                 continue;
@@ -97,23 +113,18 @@ void shell_interactive() {
             user_input = NULL;
 
             s_state = EXECUTE;
-        }
-        else if(s_state == EXECUTE)
-        {
-            int ucmd_status;
-            execute_cmd(* usr_in_cmd, &ucmd_status);
-            s_state = INPUT;
-        }
-        else if(s_state == WAIT)
+        } else if (s_state == EXECUTE)
         {
 
-        }
-        else if(s_state == FINISHED)
+            execute_cmd(*usr_in_cmd, &ucmd_status);
+            s_state = INPUT;
+        } else if (s_state == WAIT)
+        {
+
+        } else if (s_state == FINISHED)
         {
             s_state = INPUT;
         }
-
-
 
 
     }
@@ -121,10 +132,21 @@ void shell_interactive() {
 }
 
 
-
 void parse_terminal_args(int argc, char *argv[])
 {
-
+    int i;
+    char *newprompt;
+    for (i = 0; i < argc; i++)
+    {
+        if (strcmp("-p", argv[i]) == 0 && argv[i + 1] != NULL)
+        {
+            size_t len = strlen(argv[i + 1]) + 2; // one for null, one for space
+            config.prompt = malloc(len);
+            printf(" stuff\n\r");
+            sprintf(config.prompt, "%s ", argv[i + 1]);
+        }
+    }
+/*
     size_t opt_ct = 1;
     size_t opt_index, opt_search_index;
     int opt_long; // flag for whether option is long or short. 0 = short, 1 = long
@@ -155,11 +177,13 @@ void parse_terminal_args(int argc, char *argv[])
                 }
             }
         }
-    }
+    }*/
 }
 
-void sig_handler(int sig) {
-    switch (sig) {
+void sig_handler(int sig)
+{
+    switch (sig)
+    {
         case SIGINT:
             fprintf(stderr, "Retreived interrupt signal\n\r");
             input_handle_interrupt(sig);
@@ -184,6 +208,6 @@ usr_cmd_t *init_cmd(int bufsize)
 {
     usr_cmd_t *parsed = malloc(sizeof(usr_cmd_t)); // allocate space for user's command
     parsed->argc = 0;
-    parsed ->argv = malloc(sizeof(char *) * bufsize); // array of string parts of command input
+    parsed->argv = malloc(sizeof(char *) * bufsize); // array of string parts of command input
     return parsed;
 }

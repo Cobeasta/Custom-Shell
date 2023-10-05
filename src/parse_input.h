@@ -6,7 +6,7 @@
 #define PARSE_INPUT_H
 
 #include "shell.h"
-
+#include "execute_cmds.h"
 
 /*---TYPES---*/
 

@@ -111,7 +111,8 @@ void parse_line(char *line, usr_cmd_t * cmd, int bufsize)
     {
         if(token_index == 0)
         {
-
+            cmd->bg = 1;
+            return;
         }
         else
         {

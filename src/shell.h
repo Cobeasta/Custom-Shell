@@ -8,9 +8,12 @@
 #include <unistd.h> // posix standard values
 #include <signal.h> // Manipulating signals
 #include<fcntl.h> // file control
+#include <dirent.h> // directory control
 #include <errno.h> // error numbers
 #include <sys/types.h> // system datatypes
 #include <sys/wait.h> // wait functions for processes
+#include <limits.h>
+#include <sys/stat.h>
 /*---MACROS---*/
 #define MAX_COMMANDS = 50;
 #define MAX_LETTERS = 1000; // max number of letters per input
