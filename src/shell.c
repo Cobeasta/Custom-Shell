@@ -74,6 +74,8 @@ void shell_interactive()
     input_init(&config);
     execute_init();
     internal_init(&config);
+    printf("Starting\n\r");
+
     while (1)
     {
         // Checks for current shell process
@@ -86,17 +88,20 @@ void shell_interactive()
         {
             user_input = malloc(sizeof(char) * config.max_letters); //get space for line
 
-            user_input = input_get(user_input);
+            int result = input_get(&user_input);
             // TODO add to history
-            if (strlen(user_input) > 0)
+            if (result == 0 && strlen(user_input) > 0)
             {
+
                 s_state = PARSE;
             } else
             {
+                printf("did not return correctly\n\r");
                 free(user_input);
                 user_input = NULL;
 
                 s_state = INPUT;
+                continue;
             }
 
         } else if (s_state == PARSE)
@@ -115,7 +120,6 @@ void shell_interactive()
             s_state = EXECUTE;
         } else if (s_state == EXECUTE)
         {
-
             execute_cmd(*usr_in_cmd, &ucmd_status);
             s_state = INPUT;
         } else if (s_state == WAIT)
@@ -124,6 +128,11 @@ void shell_interactive()
         } else if (s_state == FINISHED)
         {
             s_state = INPUT;
+        }
+        else
+        {
+            fprintf(stderr, "issue state: %d", s_state);
+            exit(1);
         }
 
 
@@ -185,7 +194,6 @@ void sig_handler(int sig)
     switch (sig)
     {
         case SIGINT:
-            fprintf(stderr, "Retreived interrupt signal\n\r");
             input_handle_interrupt(sig);
             RECV_SIG_INT = 1;
             break;

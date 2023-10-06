@@ -1,23 +1,16 @@
-#ifndef INPUT_H
-#define INPUT_H
+//
+// Created by Cobeasta on 10/6/2023.
+//
 
-/*---IMPORTS---*/
+#ifndef CUSTOM_SHELL_INPUT_H
+#define CUSTOM_SHELL_INPUT_H
+
 #include "shell.h"
 
-/*---INCLUDES---*/
-#include <readline/readline.h> // package for fancily reading lines
-
-
 /*---PROTOTYPES---*/
-void input_init(shell_cfg_t * cfg);
-char *  input_get(char * line);
-void input_handle_interrupt(int signo);
-/**
- * Free input memory.
- */
-void input_close();
+int input_init(shell_cfg_t *cfg);
+int input_get(char ** line);
+int input_close();
+int input_handle_interrupt();
 
-
-
-
-#endif
+#endif //CUSTOM_SHELL_INPUT_H
